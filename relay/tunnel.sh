@@ -36,8 +36,10 @@ grab_url () {
   fi
   if [ -n "$u" ]; then
     u="${u%%[.,)]}"
-    echo "$u" > "$URL_FILE"
-    echo "[tunnel] public url = $u" | tee -a "$LOG_FILE"
+    if [ "$(cat "$URL_FILE" 2>/dev/null)" != "$u" ]; then
+      echo "$u" > "$URL_FILE"
+      echo "[tunnel] public url = $u" | tee -a "$LOG_FILE"
+    fi
   fi
 }
 
@@ -46,8 +48,11 @@ run_provider () {
   echo "[tunnel] trying $label" | tee -a "$LOG_FILE"
   "$@" 2>&1 | while IFS= read -r line; do
       echo "[$label] $line" >> "$LOG_FILE"
-      if [ ! -s "$URL_FILE" ]; then grab_url "$line"; fi
+      grab_url "$line"
   done
+  # the provider dropped - the published url is dead now
+  : > "$URL_FILE"
+  echo "[tunnel] $label disconnected - url cleared" | tee -a "$LOG_FILE"
 }
 
 # ---- provider loop: keep trying, never give up ------------------------
