@@ -37,7 +37,7 @@ grab_url () {
   if [ -n "$u" ]; then
     u="${u%%[.,)]}"
     if [ "$(cat "$URL_FILE" 2>/dev/null)" != "$u" ]; then
-      echo "$u" > "$URL_FILE"
+      printf '%s' "$u" > "$URL_FILE.tmp" && mv -f "$URL_FILE.tmp" "$URL_FILE"
       echo "[tunnel] public url = $u" | tee -a "$LOG_FILE"
     fi
   fi
@@ -51,7 +51,7 @@ run_provider () {
       grab_url "$line"
   done
   # the provider dropped - the published url is dead now
-  : > "$URL_FILE"
+  printf '' > "$URL_FILE.tmp" && mv -f "$URL_FILE.tmp" "$URL_FILE"
   echo "[tunnel] $label disconnected - url cleared" | tee -a "$LOG_FILE"
 }
 
